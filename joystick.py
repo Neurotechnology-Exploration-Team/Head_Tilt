@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
-from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
-
+from brainflow.board_shim import  BoardIds, BrainFlowInputParams, BoardShim, LogLevels
+import json
 # Initialize Pygame
 pygame.init()
 
@@ -30,13 +30,20 @@ TILT_SENSOR_COLOR = RED
 FONT_SIZE = 24
 font = pygame.font.Font(None, FONT_SIZE)
 
-# Set up BoardShim and start streaming data
+# create input params and specify the serial port for your device
 params = BrainFlowInputParams()
 params.serial_port = 'COM8'
+
+# create BoardShim object and prepare session
 board = BoardShim(BoardIds.CYTON_BOARD, params)
 board.prepare_session()
-board.start_stream()
 
+# reset accelerometer offsets to zero
+#config_str = '{"accelerometer":[{"x_accel_offset":0}, {"y_accel_offset":0}, {"z_accel_offset":0}]}'
+#board.config_board(config_str)
+
+# start data streaming
+board.start_stream()
 # Define function to draw text on screen
 def draw_text(text, x, y):
     text_surface = font.render(text, True, WHITE)
@@ -52,18 +59,17 @@ pygame.display.set_caption("Joystick Demo")
 while True:
     # Read data from the Cyton
     data = board.get_board_data()
-
     # Check that data has been received
     if len(data) == 0:
         continue
 
     # Extract joystick data from the data array
     if len(data[10]) ==0 or len(data[9]) == 0 or len(data[0]) ==0 or len(data[1]) == 0:
+
         continue
 
-    joystick_x = data[9][0]
+    joystick_x = (data[9][0])*-1
     joystick_y = data[10][0]
-
     # Check that joystick data is valid
     if joystick_x is None or joystick_y is None:
         continue
@@ -95,7 +101,6 @@ while True:
     else:
         joystick_color = JOYSTICK_COLOR
         tilt_direction = None
-    print("ALex")
     # Clear the screen
     screen.fill(BLACK)
 
